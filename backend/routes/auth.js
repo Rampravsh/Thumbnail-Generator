@@ -8,6 +8,8 @@ router.post("/register", authController.register);
 router.post("/verify-otp", authController.verifyOTP);
 // Login
 router.post("/login", authController.login);
+// Google Login (client-side ID token verification)
+router.post("/google-login", authController.googleLogin);
 
 const passport = require("passport");
 const jwt = require("jsonwebtoken");

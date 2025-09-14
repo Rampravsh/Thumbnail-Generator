@@ -2,6 +2,9 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
+const { OAuth2Client } = require('google-auth-library');
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Configure nodemailer transporter (example with Gmail, use env vars in production)
 const transporter = nodemailer.createTransport({
@@ -73,5 +76,37 @@ exports.login = async (req, res) => {
     res.json({ token });
   } catch (err) {
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Google Login
+exports.googleLogin = async (req, res) => {
+  const { token } = req.body; // This is the Google ID token from the frontend
+
+  try {
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    const { email, name, picture } = payload;
+
+    // Find or create user in your database
+    let user = await User.findOne({ email });
+    if (!user) {
+      user = new User({ email, name, profilePicture: picture });
+      await user.save();
+    }
+
+    // Generate your application's JWT token
+    const appToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "1d",
+    });
+
+    res.status(200).json({ token: appToken, user: { id: user._id, email: user.email, name: user.name } });
+
+  } catch (error) {
+    console.error("Google ID token verification failed:", error);
+    res.status(401).json({ message: "Google login failed" });
   }
 };

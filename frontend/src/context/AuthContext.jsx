@@ -9,13 +9,13 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true); // Add loading state
 
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
       try {
         const decoded = jwtDecode(token);
-        // Check if the token is expired
         if (decoded.exp * 1000 > Date.now()) {
           setUser(decoded);
         } else {
@@ -25,10 +25,14 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem("token");
       }
     }
+    setLoading(false); // Set loading to false after check
   }, []);
 
   const login = (userData) => {
     setUser(userData);
+    if (userData && userData.token) {
+      localStorage.setItem("token", userData.token);
+    }
   };
 
   const logout = () => {
@@ -40,6 +44,7 @@ export const AuthProvider = ({ children }) => {
     user,
     login,
     logout,
+    loading, // Expose loading state
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
