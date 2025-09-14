@@ -16,7 +16,7 @@ const port = process.env.PORT || 5000;
 // CORS configuration
 app.use(
   cors({
-    origin: "http://localhost:3000", // Replace with your frontend port if different
+    origin: "http://localhost:5173", // Replace with your frontend port if different
     credentials: true,
   })
 );
