@@ -2,6 +2,9 @@
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
+const cluster = require("cluster");
+const os = require("os");
+const process = require("process");
 require("dotenv").config();
 
 // For authentication
@@ -14,12 +17,7 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 // CORS configuration
-app.use(
-  cors({
-    origin: "http://localhost:5173", // Replace with your frontend port if different
-    credentials: true,
-  })
-);
+app.use(cors());
 
 // Middleware
 app.use(express.json());
@@ -47,10 +45,29 @@ app.get("/", (req, res) => {
 });
 const authRoutes = require("./routes/auth");
 const imageRoutes = require("./routes/image");
+const aiRoutes = require("./routes/ai"); // Add this line
+
 app.use("/api/auth", authRoutes);
 app.use("/api/image", imageRoutes);
+app.use("/api/ai", aiRoutes); // Add this line
 
 // Start server
-app.listen(port, () => {
-  console.log(`Server is running on port: ${port}`);
-});
+if (cluster.isPrimary) {
+  const numCPUs = os.cpus().length;
+  console.log(`Primary ${process.pid} is running`);
+
+  // Fork workers for each CPU
+  for (let i = 0; i < numCPUs; i++) {
+    cluster.fork();
+  }
+
+  cluster.on("exit", (worker, code, signal) => {
+    console.log(`Worker ${worker.process.pid} died`);
+    cluster.fork();
+  });
+} else {
+  app.listen(port, () => {
+    console.log(`Worker ${process.pid} is running`);
+    console.log(`Server is running on port: ${port}`);
+  });
+}

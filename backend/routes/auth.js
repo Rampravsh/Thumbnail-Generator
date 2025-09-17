@@ -24,7 +24,7 @@ router.get(
 router.get(
   "/google/callback",
   passport.authenticate("google", {
-    failureRedirect: "http://localhost:3000/login", // Redirect to frontend login page on failure
+    failureRedirect: "http://localhost:5173/login", // Redirect to frontend login page on failure
     session: false, // We are using tokens, so no session is needed
   }),
   (req, res) => {
@@ -38,4 +38,3 @@ router.get(
 );
 
 module.exports = router;
-

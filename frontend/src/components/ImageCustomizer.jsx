@@ -1,32 +1,50 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import axios from 'axios';
 import DownloadButton from './DownloadButton';
+import { useAuth } from '../context/AuthContext';
 
 const ImageCustomizer = () => {
   const { imageId } = useParams();
   const canvasRef = useRef(null);
-  const [image, setImage] = useState(null);
   const [text, setText] = useState('');
-
-  // In a real app, you would fetch image data based on imageId
-  const imageUrl = `https://via.placeholder.com/800x450.png?text=Image+${imageId}`;
+  const [originalImage, setOriginalImage] = useState(null);
+  const { user } = useAuth();
 
   useEffect(() => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous'; // To avoid tainted canvas error
-    img.src = imageUrl;
-    img.onload = () => {
-      setImage(img);
+    const fetchImage = async () => {
+      if (!user) return;
+
+      try {
+        const token = localStorage.getItem('token');
+        const res = await axios.get(`http://localhost:5000/api/image/${imageId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const imageUrl = `http://localhost:5000/api/image/file/${res.data.filename}`;
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.src = imageUrl;
+        img.onload = () => {
+          setOriginalImage(img);
+        };
+      } catch (err) {
+        console.error('Failed to fetch image:', err);
+      }
     };
-  }, [imageUrl]);
+
+    fetchImage();
+  }, [imageId, user]);
 
   useEffect(() => {
-    if (image && canvasRef.current) {
+    if (originalImage && canvasRef.current) {
       const canvas = canvasRef.current;
       const ctx = canvas.getContext('2d');
-      canvas.width = image.width;
-      canvas.height = image.height;
-      ctx.drawImage(image, 0, 0);
+      canvas.width = originalImage.width;
+      canvas.height = originalImage.height;
+      ctx.drawImage(originalImage, 0, 0);
 
       if (text) {
         ctx.fillStyle = 'white';
@@ -35,7 +53,7 @@ const ImageCustomizer = () => {
         ctx.fillText(text, canvas.width / 2, canvas.height / 2);
       }
     }
-  }, [image, text]);
+  }, [originalImage, text]);
 
   const getCanvasDataUrl = () => {
     if (canvasRef.current) {
