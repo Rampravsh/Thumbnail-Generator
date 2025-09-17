@@ -5,7 +5,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import ChatUI from './components/ChatUI';
 import Gallery from './components/Gallery';
 import ImageCustomizer from './components/ImageCustomizer';
-import ImageUpload from './components/ImageUpload';
+import ThumbnailGenerator from './components/ThumbnailGenerator';
 import Login from './components/Login';
 import Register from './components/Rigister';
 import OTPVerify from './components/OTPVerify';
@@ -46,7 +46,7 @@ function Home() {
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
       <div>
         <h2 className="text-2xl font-bold mb-4">Create a New Thumbnail</h2>
-        <ImageUpload />
+        <ThumbnailGenerator />
       </div>
       <div>
         <h2 className="text-2xl font-bold mb-4">Chat with AI</h2>

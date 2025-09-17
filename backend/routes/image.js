@@ -18,23 +18,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 const Image = require("../models/Image");
-const jwt = require("jsonwebtoken");
-const User = require("../models/User");
-
-// Middleware to get user from JWT
-async function getUserFromToken(req, res, next) {
-  const auth = req.headers.authorization;
-  if (!auth || !auth.startsWith("Bearer "))
-    return res.status(401).json({ message: "No token" });
-  try {
-    const decoded = jwt.verify(auth.split(" ")[1], process.env.JWT_SECRET);
-    req.user = await User.findById(decoded.userId);
-    if (!req.user) return res.status(401).json({ message: "User not found" });
-    next();
-  } catch {
-    return res.status(401).json({ message: "Invalid token" });
-  }
-}
+const { getUserFromToken } = require("../middleware/auth");
 
 // POST /api/image/upload
 router.post(
@@ -50,25 +34,11 @@ router.post(
         path: req.file.path,
       });
 
-      // Integrate with banana model for AI processing
-      const { callBananaModel } = require("../utils/banana");
-      let bananaResult = null;
-      try {
-        bananaResult = await callBananaModel(req.file.path);
-      } catch (bananaErr) {
-        // Log or handle banana model error, but don't block upload
-        bananaResult = {
-          error: "Banana model failed",
-          details: bananaErr.message,
-        };
-      }
-
       res.json({
         message: "Image uploaded successfully",
         filename: image.filename,
         path: image.path,
         id: image._id,
-        bananaResult,
       });
     } catch (err) {
       res.status(500).json({ message: "Image upload failed" });
@@ -91,7 +61,10 @@ router.get("/list", getUserFromToken, async (req, res) => {
 // GET /api/image/:id - Get image details by ID
 router.get("/:id", getUserFromToken, async (req, res) => {
   try {
-    const image = await Image.findOne({ _id: req.params.id, user: req.user._id });
+    const image = await Image.findOne({
+      _id: req.params.id,
+      user: req.user._id,
+    });
     if (!image) {
       return res.status(404).json({ message: "Image not found" });
     }

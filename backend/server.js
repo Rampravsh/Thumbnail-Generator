@@ -62,12 +62,12 @@ if (cluster.isPrimary) {
   }
 
   cluster.on("exit", (worker, code, signal) => {
-    console.log(`Worker ${worker.process.pid} died`);
+    // console.log(`Worker ${worker.process.pid} died`);
     cluster.fork();
   });
 } else {
   app.listen(port, () => {
-    console.log(`Worker ${process.pid} is running`);
-    console.log(`Server is running on port: ${port}`);
+    // console.log(`Worker ${process.pid} is running`);
+    // console.log(`Server is running on port: ${port}`);
   });
 }
